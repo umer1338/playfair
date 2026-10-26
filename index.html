@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visual Playfair Cipher</title>
+<style>
+body {
+    background-color: #1e1e1e;
+    color: #00ff99;
+    font-family: 'Courier New', monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+
+h1 {
+    text-shadow: 0 0 10px #00ff99;
+}
+
+input, textarea {
+    width: 400px;
+    padding: 15px;
+    margin: 10px 0;
+    border: 2px solid #00ff99;
+    border-radius: 5px;
+    background-color: #1e1e1e;
+    color: #00ff99;
+    font-size: 20px;
+}
+
+#buttons {
+    display: flex;
+    gap: 10px;
+}
+
+button {
+    padding: 12px 25px;
+    margin: 5px;
+    border-radius: 5px;
+    border: 2px solid #00ff99;
+    background-color: #1e1e1e;
+    color: #00ff99;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 18px;
+    transition: 0.2s;
+}
+
+button:hover {
+    background-color: #00ff99;
+    color: #1e1e1e;
+}
+
+#matrix, #pairs, #process {
+    margin-top: 20px;
+    border: 2px solid #00ff99;
+    padding: 15px;
+    border-radius: 5px;
+    width: 400px;
+    text-align: center;
+    min-height: 50px;
+    font-size: 20px;
+}
+
+table {
+    margin: 0 auto;
+    border-collapse: collapse;
+}
+
+td {
+    border: 1px solid #00ff99;
+    padding: 10px;
+    width: 40px;
+    height: 40px;
+    text-align: center;
+}
+</style>
+</head>
+<body>
+
+<h1>Visual Playfair Cipher</h1>
+
+<input type="text" id="key" placeholder="Enter Keyword (Letters Only)">
+<textarea id="text" rows="4" placeholder="Enter Message"></textarea>
+
+<div id="buttons">
+    <button onclick="startEncryption()">Encrypt & Visualize</button>
+</div>
+
+<div id="matrix"><strong>Matrix:</strong></div>
+<div id="pairs"><strong>Pairs:</strong></div>
+<div id="process"><strong>Encryption Process:</strong></div>
+
+<script>
+// Helper: remove duplicates, merge key + alphabet
+function generateMatrix(key) {
+    key = key.toUpperCase().replace(/J/g, "I").replace(/[^A-Z]/g, "");
+    let alphabet = "ABCDEFGHIKLMNOPQRSTUVWXYZ";
+    let used = "";
+    key += alphabet;
+
+    for (let char of key) {
+        if (!used.includes(char)) used += char;
+    }
+
+    let matrix = [];
+    for (let i = 0; i < 5; i++) {
+        matrix[i] = used.slice(i*5, i*5+5).split("");
+    }
+    return matrix;
+}
+
+// Display matrix visually
+function displayMatrix(matrix) {
+    let html = "<table>";
+    for (let row of matrix) {
+        html += "<tr>";
+        for (let cell of row) html += `<td>${cell}</td>`;
+        html += "</tr>";
+    }
+    html += "</table>";
+    document.getElementById("matrix").innerHTML = "<strong>Matrix:</strong>" + html;
+}
+
+// Prepare text pairs
+function preparePairs(text) {
+    text = text.toUpperCase().replace(/J/g, "I").replace(/[^A-Z]/g, "");
+    let result = [];
+    for (let i = 0; i < text.length; i+=2) {
+        let a = text[i];
+        let b = text[i+1] || "X";
+        if (a===b) b="X";
+        result.push(a+b);
+    }
+    return result;
+}
+
+// Find position of letter
+function findPos(matrix, char) {
+    for (let i = 0; i < 5; i++) {
+        for (let j = 0; j < 5; j++) {
+            if (matrix[i][j]===char) return [i,j];
+        }
+    }
+}
+
+// Animate encryption of pair
+async function encryptPair(pair, matrix) {
+    let [a,b] = pair.split("");
+    let posA = findPos(matrix,a);
+    let posB = findPos(matrix,b);
+    let cipherA, cipherB;
+    let rule = "";
+
+    if (posA[0]===posB[0]) { // same row
+        cipherA = matrix[posA[0]][(posA[1]+1)%5];
+        cipherB = matrix[posB[0]][(posB[1]+1)%5];
+        rule = "Same Row → shift right";
+    } else if (posA[1]===posB[1]) { // same column
+        cipherA = matrix[(posA[0]+1)%5][posA[1]];
+        cipherB = matrix[(posB[0]+1)%5][posB[1]];
+        rule = "Same Column → shift down";
+    } else { // rectangle
+        cipherA = matrix[posA[0]][posB[1]];
+        cipherB = matrix[posB[0]][posA[1]];
+        rule = "Rectangle → swap columns";
+    }
+
+    // Show process step
+    document.getElementById("process").innerHTML += `<br>${a}${b} → ${cipherA}${cipherB} | ${rule}`;
+    await new Promise(r=>setTimeout(r,800)); // pause for animation
+    return cipherA + cipherB;
+}
+
+// Main function
+async function startEncryption() {
+    let key = document.getElementById("key").value;
+    let text = document.getElementById("text").value;
+    if(!key || !text) return alert("Enter both key and message!");
+
+    let matrix = generateMatrix(key);
+    displayMatrix(matrix);
+
+    let pairs = preparePairs(text);
+    document.getElementById("pairs").innerHTML = "<strong>Pairs:</strong> " + pairs.join(" ");
+
+    document.getElementById("process").innerHTML = "<strong>Encryption Process:</strong>";
+
+    let cipherText = "";
+    for (let pair of pairs) {
+        cipherText += await encryptPair(pair, matrix);
+    }
+
+    document.getElementById("process").innerHTML += `<br><br><strong>Ciphertext:</strong> ${cipherText}`;
+}
+</script>
+
+</body>
+</html>

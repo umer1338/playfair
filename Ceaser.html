@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Animated Caesar Cipher</title>
+<style>
+body {
+    background-color: #1e1e1e;
+    color: #00ff99;
+    font-family: 'Courier New', monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px;
+    font-size: xx-large;
+}
+
+h1 {
+    text-shadow: 0 0 10px #00ff99;
+}
+
+input, textarea {
+    width: 400px;
+    padding: 15px;
+    margin: 10px 0;
+    border: 2px solid #00ff99;
+    border-radius: 5px;
+    background-color: #1e1e1e;
+    color: #00ff99;
+    font-family: 'Courier New', monospace;
+    font-size: 40px;
+}
+
+#buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+button {
+    padding: 12px 25px;
+    margin: 5px;
+    border-radius: 5px;
+    border: 2px solid #00ff99;
+    background-color: #1e1e1e;
+    color: #00ff99;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 18px;
+    transition: 0.2s;
+}
+
+button:hover {
+    background-color: #00ff99;
+    color: #1e1e1e;
+}
+
+#result {
+    margin-top: 20px;
+    min-height: 60px;
+    font-size: 40px;
+    text-align: center;
+    border: 2px solid #00ff99;
+    width: 400px;
+    padding: 15px;
+    border-radius: 5px;
+    word-break: break-word;
+    font-weight: 900;
+}
+
+.letter {
+    display: inline-block;
+    min-width: 25px;
+}
+</style>
+</head>
+<body>
+
+<h1>Caesar Cipher</h1>
+
+<input type="number" id="shift" placeholder="Enter Shift (1-25)">
+<textarea id="text" rows="4" placeholder="Enter Message"></textarea>
+
+<div id="buttons">
+    <button onclick="encrypt()">Encrypt</button>
+    <button onclick="decrypt()">Decrypt</button>
+</div>
+
+<div id="result"></div>
+
+<script>
+// Helper: clean text
+function cleanText(text) {
+    return text.toUpperCase().replace(/[^A-Z ]/g, "");
+}
+
+// Animate letter scrolling
+function scrollLetter(letterElem, startChar, shift, isEncrypt, delay) {
+    let steps = shift;
+    let startCode = startChar.charCodeAt(0);
+
+    if (!isEncrypt) {
+        startCode = startChar.charCodeAt(0) - shift;
+        if (startCode < 65) startCode += 26;
+    }
+
+    let count = 0;
+    let interval = setInterval(() => {
+        let code = isEncrypt ? (startChar.charCodeAt(0) - 65 + count) % 26 + 65
+                             : (startChar.charCodeAt(0) - 65 - count + 26) % 26 + 65;
+        letterElem.innerText = String.fromCharCode(code);
+        count++;
+        if (count > steps) clearInterval(interval);
+    }, 150);
+}
+
+// Encrypt Caesar
+function encrypt() {
+    let shift = parseInt(document.getElementById("shift").value);
+    let text = cleanText(document.getElementById("text").value);
+    if (!shift || !text) return alert("Enter shift and message!");
+
+    let resultDiv = document.getElementById("result");
+    resultDiv.innerHTML = "";
+
+    for (let i = 0; i < text.length; i++) {
+        let char = text[i];
+        let span = document.createElement("span");
+        span.className = "letter";
+        span.innerText = char;
+        resultDiv.appendChild(span);
+
+        if (char !== " ") {
+            setTimeout(() => {
+                scrollLetter(span, char, shift, true);
+            }, i * 500); // stagger letters
+        }
+    }
+}
+
+// Decrypt Caesar
+function decrypt() {
+    let shift = parseInt(document.getElementById("shift").value);
+    let text = cleanText(document.getElementById("text").value);
+    if (!shift || !text) return alert("Enter shift and message!");
+
+    let resultDiv = document.getElementById("result");
+    resultDiv.innerHTML = "";
+
+    for (let i = 0; i < text.length; i++) {
+        let char = text[i];
+        let span = document.createElement("span");
+        span.className = "letter";
+        span.innerText = char;
+        resultDiv.appendChild(span);
+
+        if (char !== " ") {
+            setTimeout(() => {
+                scrollLetter(span, char, shift, false);
+            }, i * 500);
+        }
+    }
+}
+</script>
+
+</body>
+</html>
